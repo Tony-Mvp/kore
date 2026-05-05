@@ -1,0 +1,8 @@
+#define MODKEY Mod4Mask
+
+static const char *termcmd[] = { "st", NULL };
+static const char *exitcmd[] = { "pkill", "awm", NULL  };
+static Key keys[] = {
+	{ MODKEY,	XK_Return,		spawn,	{.v = termcmd} },
+	{ MODKEY,       XK_q,                   quit,           {0}     },
+};
