@@ -9,7 +9,7 @@ XEvent ev;
 //Client *clients = NULL;
 typedef union {
 	const char **v;
-        unsigned int ui;
+	unsigned int ui;
 } Arg;
 
 typedef struct {
@@ -66,17 +66,18 @@ void quit(const Arg *arg)
 void killclient(const Arg *arg)
 {
 	Client *c;
-        
-        if (!clients) return;
 
-        for (c = clients; c; c = c->next) {
-                if (c->tags & sel_tag) {
-                        XKillClient(d, c->win);
-                        
-                        tile();
-                        break;
-                }
-        }
+	if (!clients)
+		return;
+
+	for (c = clients; c; c = c->next) {
+		if (c->tags & sel_tag) {
+			XKillClient(d, c->win);
+
+			tile();
+			break;
+		}
+	}
 }
 
 /*void killclient(const Arg *arg)
@@ -275,7 +276,7 @@ int main(void)
 			Window w = ev.xmaprequest.window;
 			manage(d, w);
 			XMapWindow(d, w);
-			tile(d, root);
+			tile();
 			XWindowChanges wc;
 
 			//      wc.x = 50;
@@ -291,7 +292,7 @@ int main(void)
 			XMapWindow(d, ev.xmaprequest.window);
 		} else if (ev.type == UnmapNotify || ev.type == DestroyNotify) {
 			unmanage(d, ev.xunmap.window);
-			tile(d, root);
+			tile();
 		} else if (ev.type == EnterNotify) {
 			XSetInputFocus(d, ev.xcrossing.window, RevertToParent,
 				       CurrentTime);

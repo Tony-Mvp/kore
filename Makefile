@@ -1,4 +1,4 @@
-NAME = awm
+NAME = kore
 
 X11INC = /usr/include/X11
 X11LIB = /usr/lib/X11
@@ -10,8 +10,8 @@ PREFIX = /usr/local
 
 all: ${NAME}
 
-${NAME}: awm.c config.h
-	gcc -o ${NAME} awm.c ${CFLAGS} ${LDFLAGS}
+${NAME}: kore.c config.h
+	gcc -o ${NAME} kore.c ${CFLAGS} ${LDFLAGS}
 
 clean:
 	rm -f ${NAME}

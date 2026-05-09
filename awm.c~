@@ -9,6 +9,7 @@ XEvent ev;
 //Client *clients = NULL;
 typedef union {
 	const char **v;
+        unsigned int ui;
 } Arg;
 
 typedef struct {
@@ -28,7 +29,7 @@ struct Client {
 Client *clients = NULL;
 
 unsigned int sel_tag = 1;
-void tag(const Arg *arg);
+void tag(const Arg * arg);
 void view(const Arg * arg);
 void tile();
 void spawn(const Arg * arg);
@@ -62,15 +63,20 @@ void quit(const Arg *arg)
 	exit(0);
 }
 
-void killclient(const Arg *arg) {
-        Window w;
-        int revert;
-        XGetInputFocus(d, &w, &revert);
+void killclient(const Arg *arg)
+{
+	Client *c;
+        
+        if (!clients) return;
 
-        if (w == root || w == None) return;
-
-        XKillClient(d, w);
-        tile();
+        for (c = clients; c; c = c->next) {
+                if (c->tags & sel_tag) {
+                        XKillClient(d, c->win);
+                        
+                        tile();
+                        break;
+                }
+        }
 }
 
 /*void killclient(const Arg *arg)
@@ -134,15 +140,13 @@ void tile()
 	int n = 0;
 	Client *c;
 	/*for (c = clients; c; c = c->next)
-		n++;
-	if (n == 0)
-		return; */
+	   n++;
+	   if (n == 0)
+	   return; */
 
 	for (c = clients; c; c = c->next)
 		if (c->tags & sel_tag)
 			n++;
-	if (n == 0)
-		return;
 
 	int gappx = 10;
 	int mw = (n == 1) ? wa.width : wa.width * 0.6;	// ancho del Master 60%
@@ -157,24 +161,24 @@ void tile()
 				y = gappx;
 				w = mw - (gappx * (n == 1 ? 2 : 1));
 				h = wa.height - (gappx * 2);
-			} else { //STACK
-                                x = mw + gappx;
-                                w = wa.width - mw - (gappx * 2);
-
-                                /* altura base */
-                                h = (wa.height - (gappx * (n + 1))) / (n - 1);
-                                y = gappx + (i - 1) * (h + gappx);
-
-                                y = gappx + (i - 1) * (h + gappx);
-                                // si es la ultima ventana, estirarla hasta el fondo
-                                if ( i == n - 1 ) {
-                                        h = wa.height - y - gappx;
-                                }
-
-			/*      x = mw + gappx;
+			} else {	//STACK
+				x = mw + gappx;
 				w = wa.width - mw - (gappx * 2);
-				h = (wa.height - (gappx * (n))) / (n - 1);
-				y = gappx + (i - 1) * (h + gappx); */
+
+				/* altura base */
+				h = (wa.height - (gappx * (n + 1))) / (n - 1);
+				y = gappx + (i - 1) * (h + gappx);
+
+				y = gappx + (i - 1) * (h + gappx);
+				// si es la ultima ventana, estirarla hasta el fondo
+				if (i == n - 1) {
+					h = wa.height - y - gappx;
+				}
+
+				/*      x = mw + gappx;
+				   w = wa.width - mw - (gappx * 2);
+				   h = (wa.height - (gappx * (n))) / (n - 1);
+				   y = gappx + (i - 1) * (h + gappx); */
 			}
 			//int border = 2;
 			XMoveResizeWindow(d, c->win, x, y, w - (border * 2),
@@ -192,28 +196,30 @@ void tile()
 	}
 }
 
-void view(const Arg * arg) {
-        if ((arg->ui & 0xf) == sel_tag)
-                return;
+void view(const Arg *arg)
+{
+	if ((arg->ui & 0xf) == sel_tag)
+		return;
 
-        sel_tag = arg->ui;
-        tile();
+	sel_tag = arg->ui;
+	tile();
 }
 
-void tag(const Arg * arg) {
-        Window w;
-        int revert;
-        Client *c;
+void tag(const Arg *arg)
+{
+	Window w;
+	int revert;
+	Client *c;
 
-        XGetInputFocus(d, &w, &revert);
-        
-        for (c = clients; c; c = c->next) {
-                        if (c->win == w) {
-                                c->tags = arg->ui;
-                                tile(); // refresh
-                                break;
-                        }
-        }
+	XGetInputFocus(d, &w, &revert);
+
+	for (c = clients; c; c = c->next) {
+		if (c->win == w) {
+			c->tags = arg->ui;
+			tile();	// refresh
+			break;
+		}
+	}
 }
 
 void focusstack(const Arg *arg)
@@ -249,8 +255,8 @@ int main(void)
 	root = DefaultRootWindow(d);
 
 	XSelectInput(d, root,
-		     SubstructureRedirectMask | SubstructureNotifyMask | EnterWindowMask |
-		     KeyPressMask);
+		     SubstructureRedirectMask | SubstructureNotifyMask |
+		     EnterWindowMask | KeyPressMask);
 	grabkeys(d, root);
 
 	XDefineCursor(d, root, XCreateFontCursor(d, 132));
@@ -269,7 +275,7 @@ int main(void)
 			Window w = ev.xmaprequest.window;
 			manage(d, w);
 			XMapWindow(d, w);
-			tile(d, root);
+			tile();
 			XWindowChanges wc;
 
 			//      wc.x = 50;
@@ -285,10 +291,11 @@ int main(void)
 			XMapWindow(d, ev.xmaprequest.window);
 		} else if (ev.type == UnmapNotify || ev.type == DestroyNotify) {
 			unmanage(d, ev.xunmap.window);
-			tile(d, root);
+			tile();
 		} else if (ev.type == EnterNotify) {
-                                        XSetInputFocus(d, ev.xcrossing.window, RevertToParent, CurrentTime);
-                }
+			XSetInputFocus(d, ev.xcrossing.window, RevertToParent,
+				       CurrentTime);
+		}
 	}
 
 	XCloseDisplay(d);
