@@ -40,6 +40,9 @@ void quit(const Arg *arg);
 void killclient(const Arg *arg);
 void focusstack(const Arg *arg);
 void focus(Client *c);
+void zoom(const Arg *arg);
+void detach(Client *c);
+void attach(Client *c);
 
 #include "config.h"
 
@@ -64,19 +67,9 @@ void spawn(const Arg *arg) {
 void quit(const Arg *arg) { exit(0); }
 
 void killclient(const Arg *arg) {
-  Client *c;
-
-  if (!clients)
+  if (!sel)
     return;
-
-  for (c = clients; c; c = c->next) {
-    if (c->tags & sel_tag) {
-      XKillClient(d, c->win);
-
-      tile();
-      break;
-    }
-  }
+  XKillClient(d, sel->win);
 }
 
 /*void killclient(const Arg *arg)
@@ -257,6 +250,31 @@ void focusstack(const Arg *arg) {
   if (c) {
     focus(c);
   }
+}
+
+void detach(Client *c) {
+  Client **tc;
+  for (tc = &clients; *tc && *tc != c; tc = &(*tc)->next)
+    ;
+  *tc = c->next;
+}
+
+void attach(Client *c) {
+  c->next = clients;
+  clients = c;
+}
+
+void zoom(const Arg *arg) {
+  Client *c = sel;
+
+  if (c == clients) {
+    if (!(c = c->next))
+      return;
+  }
+  detach(sel);
+  attach(sel);
+  focus(sel);
+  tile();
 }
 
 Client *wintoclient(Window w) {
