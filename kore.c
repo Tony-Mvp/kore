@@ -195,10 +195,11 @@ void tile() {
 }
 
 void view(const Arg *arg) {
-  if ((arg->ui & 0x1ff) == sel_tag) /* 0x1ff -> 9 */
+  if ((arg->ui & TAGMASK) == sel_tag)
     return;
 
-  sel_tag = arg->ui;
+  sel_tag = arg->ui & TAGMASK;
+  focus(NULL);
   tile();
 }
 
@@ -219,18 +220,10 @@ void focus(Client *c) {
 }
 
 void tag(const Arg *arg) {
-  Window w;
-  int revert;
-  Client *c;
-
-  XGetInputFocus(d, &w, &revert);
-
-  for (c = clients; c; c = c->next) {
-    if (c->win == w) {
-      c->tags = arg->ui;
-      tile(); // refresh
-      break;
-    }
+  if (sel && arg->ui & TAGMASK) {
+    sel->tags = arg->ui & TAGMASK;
+    focus(NULL);
+    tile();
   }
 }
 
